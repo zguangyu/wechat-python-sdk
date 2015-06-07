@@ -56,4 +56,9 @@ class LoginVerifyCodeError(LoginError):
     """
     pass
 
+class CorpSignatureError(Exception):
+    """
+    微信企业号开启应用的回调模式校验异常
+    """
+    pass
 
