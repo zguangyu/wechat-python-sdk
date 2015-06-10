@@ -85,7 +85,7 @@ class WechatCorp(object):
         if not msg_signature or not timestamp or not nonce or not echostr:
             raise CorpSignatureError('Please provide msg_signature and timestamp and nonce and echostr parameter in the construction of class.')
 
-        ret,sEchoStr=self.__wxcpt.VerifyURL(msg_signature, timestamp, nonce, echostr)
+        ret,sEchoStr=self.__wxcpt.verify_url(msg_signature, timestamp, nonce, echostr)
         if(ret!=0):
             raise CorpSignatureError("ERR: VerifyURL ret: " + ret)
         else:
@@ -109,7 +109,7 @@ class WechatCorp(object):
             raise ParseError()
 
         #解密数据
-        ret,sMsg=self.__wxcpt.DecryptMsg(data, msg_signature, timestamp, nonce)
+        ret,sMsg=self.__wxcpt.decrypt_message(data, msg_signature, timestamp, nonce)
 
         try:
             xml = XMLStore(xmlstring=sMsg)
@@ -172,7 +172,7 @@ class WechatCorp(object):
         """
         sReqTimeStamp=str(int(time.time()))
         sReqNonce="".join(map(lambda x:str(random.randint(1,9)),range(16)))
-        ret,sEncryptMsg = self.__wxcpt.EncryptMsg(response_xml.encode("utf-8"),sReqNonce,sReqTimeStamp)
+        ret,sEncryptMsg = self.__wxcpt.encrypt_message(response_xml.encode("utf-8"),sReqNonce,sReqTimeStamp)
         return sEncryptMsg
 
     @property

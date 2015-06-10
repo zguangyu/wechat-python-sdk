@@ -887,7 +887,7 @@ class WechatBasic(object):
         :raises OfficialAPIError: 如果返回码提示有错误，抛出异常；否则返回 True
         """
         if "errcode" in json_data and json_data["errcode"] != 0:
-            raise OfficialAPIError("{}: {}".format(json_data["errcode"], json_data["errmsg"]))
+            raise OfficialAPIError(errcode=json_data["errcode"], errmsg=json_data["errmsg"])
 
     def _request(self, method, url, **kwargs):
         """
