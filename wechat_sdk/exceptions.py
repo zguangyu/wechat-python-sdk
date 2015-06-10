@@ -82,9 +82,3 @@ class LoginError(UnOfficialAPIError):
 class LoginVerifyCodeError(LoginError):
     """微信非官方API请求出错异常 - 登录出错 - 验证码错误"""
     pass
-
-
-class CorpSignatureError(WechatSDKException):
-    """微信企业号开启应用的回调模式校验异常"""
-    pass
-

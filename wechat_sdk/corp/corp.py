@@ -1,43 +1,47 @@
 # -*- coding: utf-8 -*-
 
-import hashlib
 import requests
 import time
 import json
 import cgi
 import random
 
-from WXBizMsgCrypt import WXBizMsgCrypt
+from wechat_sdk.corp.message import MESSAGE_TYPES, UnknownMessage
+from wechat_sdk.corp.exceptions import CorpSignatureError
+from wechat_sdk.crypto import WechatCorpCrypto
+from wechat_sdk.crypto.exceptions import ValidateSignatureError
+from wechat_sdk.exceptions import ParseError, NeedParseError, NeedParamError, OfficialAPIError
+from wechat_sdk.lib import XMLStore
+from wechat_sdk.corp.reply import TextReply
+from wechat_sdk.utils import to_binary, to_text
 
-from .corp_message import MESSAGE_TYPES, UnknownMessage
-from .exceptions import ParseError, NeedParseError, NeedParamError, OfficialAPIError, CorpSignatureError
-from .lib import XMLStore
-from .corp_reply import TextReply
 
 class WechatCorp(object):
-    """
-    微信企业号基本功能类
+    """微信企业号基本功能类"""
 
-    """
-    def __init__(self, CorpID=None, Secret=None, access_token=None, access_token_expires_at=None, Token=None, EncodingAESKey=None,):
+    def __init__(self, token=None, corp_id=None, secret=None, access_token=None, access_token_expires_at=None,
+                 encoding_aes_key=None):
+        """构造函数
 
-        """
-        :param CorpID: CorpID
-        :param Secret: Corp Secret
+        :param corp_id: Corp ID
+        :param secret: Corp Secret
         :param access_token: 直接导入的 access_token 值, 该值需要在上一次该类实例化之后手动进行缓存并在此处传入, 如果不传入, 将会在需要时自动重新获取
         :param access_token_expires_at: 直接导入的 access_token 的过期日期，该值需要在上一次该类实例化之后手动进行缓存并在此处传入, 如果不传入, 将会在需要时自动重新获取
+        :param encoding_aes_key: EncodingAESKey
         """
 
-        self.__corpid=CorpID
-        self.__secret=Secret
-        self.__token=Token
-        self.__EncodingAESKey=EncodingAESKey
+        self.__corpid = corp_id
+        self.__secret = secret
+        self.__token = token
+        self.__encoding_aes_key = encoding_aes_key
 
         self.__access_token = access_token
         self.__access_token_expires_at = access_token_expires_at
-        self.__wxcpt=WXBizMsgCrypt(self.__token,self.__EncodingAESKey,self.__corpid)
+        self.__crypto = WechatCorpCrypto(self.__token, self.__encoding_aes_key, self.__corpid)
+        self.__is_parse = False
+        self.__message = None
 
-    def grant_token(self,override=True):
+    def grant_token(self, override=True):
         """
         获取 Access Token
         详情请参考 http://qydev.weixin.qq.com/wiki/index.php?title=%E4%B8%BB%E5%8A%A8%E8%B0%83%E7%94%A8
@@ -46,6 +50,7 @@ class WechatCorp(object):
         :raise HTTPError: 微信api http 请求失败
         """
         self._check_corpid_secret()
+
         response_json = self._get(
             url="https://qyapi.weixin.qq.com/cgi-bin/gettoken",
             params={
@@ -83,22 +88,24 @@ class WechatCorp(object):
         self._check_token_EncodingAESKey()
 
         if not msg_signature or not timestamp or not nonce or not echostr:
-            raise CorpSignatureError('Please provide msg_signature and timestamp and nonce and echostr parameter in the construction of class.')
-
-        ret,sEchoStr=self.__wxcpt.verify_url(msg_signature, timestamp, nonce, echostr)
-        if(ret!=0):
-            raise CorpSignatureError("ERR: VerifyURL ret: " + ret)
-        else:
-            return sEchoStr
+            raise CorpSignatureError(
+                'Please provide msg_signature, timestamp, nonce and echostr parameter.'
+            )
+        try:
+            return self.__crypto.check_signature(msg_signature, timestamp, nonce, echostr)
+        except ValidateSignatureError:
+            raise CorpSignatureError("validate signature error")
 
     def parse_data(self, msg_signature, timestamp, nonce, data):
         """
         解析微信服务器发送过来的数据并保存类中
+
         1.解析出url上的参数，包括消息体签名(msg_signature)，时间戳(timestamp)以及随机数字串(nonce)
-	    2.验证消息体签名的正确性。
-	    3.将post请求的数据进行xml解析，并将<Encrypt>标签的内容进行解密，解密出来的明文即是用户回复消息的明文，明文格式请参考官方文档
+        2.验证消息体签名的正确性。
+        3.将post请求的数据进行xml解析，并将<Encrypt>标签的内容进行解密，解密出来的明文即是用户回复消息的明文，明文格式请参考官方文档
+
         :param data: HTTP Request 的 Body 数据
-        :raises ParseError: 解析微信服务器数据错误, 数据不合法
+        :raise ParseError: 解析微信服务器数据错误, 数据不合法
         """
         result = {}
         if type(data) == unicode:
@@ -108,16 +115,14 @@ class WechatCorp(object):
         else:
             raise ParseError()
 
-        #解密数据
-        ret,sMsg=self.__wxcpt.decrypt_message(data, msg_signature, timestamp, nonce)
-
+        msg = self.__crypto.decrypt_message(data, msg_signature, timestamp, nonce)
         try:
-            xml = XMLStore(xmlstring=sMsg)
+            xml = XMLStore(xmlstring=msg)
         except Exception:
             raise ParseError()
 
         result = xml.xml2dict
-        result['raw'] = sMsg
+        result['raw'] = msg
         result['type'] = result.pop('MsgType').lower()
 
         message_type = MESSAGE_TYPES.get(result['type'], UnknownMessage)
@@ -148,17 +153,15 @@ class WechatCorp(object):
         if escape:
             content = cgi.escape(content)
 
-        response_xml= TextReply(message=self.__message, content=content).render()
+        response_xml = TextReply(message=self.__message, content=content).render()
         return self._EncryptMsg(response_xml)
 
     @property
-    def wxcpt(self):
-        """
-        :return:
-        """
-        return self.__wxcpt
+    def crypto(self):
+        """返回加密类 (WechatCropyto)"""
+        return self.__crypto
 
-    def _EncryptMsg(self,response_xml):
+    def _EncryptMsg(self, response_xml):
         """
         返回加密的xml信息，格式
         <xml>
@@ -170,10 +173,10 @@ class WechatCorp(object):
         :param response_xml: 需要加密的xml数据
         :return:
         """
-        sReqTimeStamp=str(int(time.time()))
-        sReqNonce="".join(map(lambda x:str(random.randint(1,9)),range(16)))
-        ret,sEncryptMsg = self.__wxcpt.encrypt_message(response_xml.encode("utf-8"),sReqNonce,sReqTimeStamp)
-        return sEncryptMsg
+        timestamp = to_binary(int(time.time()))
+        nonce = "".join(map(lambda x: to_binary(random.randint(1, 9)), range(16)))
+        encrypted_message = self.__crypto.encrypt_message(response_xml.encode("utf-8"), nonce, timestamp)
+        return encrypted_message
 
     @property
     def access_token(self):
@@ -199,9 +202,8 @@ class WechatCorp(object):
         检查 Token, EncodingAESKey 是否存在
         :raises NeedParamError: Token 参数没有在初始化的时候提供
         """
-        if not self.__token or not self.__EncodingAESKey:
+        if not self.__token or not self.__encoding_aes_key:
             raise NeedParamError('Please provide Token and EncodingAESKey parameter in the construction of class.')
-
 
     def _check_parse(self):
         """

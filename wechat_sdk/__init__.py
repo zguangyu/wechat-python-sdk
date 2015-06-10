@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ['WechatBasic', 'WechatExt']
+__all__ = ['WechatBasic', 'WechatExt', 'WechatCorp']
 
 try:
     from wechat_sdk.basic import WechatBasic
