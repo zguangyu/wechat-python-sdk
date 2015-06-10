@@ -4,6 +4,7 @@ import base64
 import time
 import six
 
+from wechat_sdk.exceptions import ParseError
 from wechat_sdk.crypto.base import BaseCrypto
 from wechat_sdk.crypto.utils import get_sha1_signature
 from wechat_sdk.crypto.exceptions import ValidateSignatureError, ValidateAESKeyError, DecryptAESError
@@ -82,7 +83,10 @@ class WechatBaseCrypto(object):
         """
         if isinstance(msg, six.string_types):
             import xmltodict
-            msg = xmltodict.parse(to_text(msg))['xml']
+            try:
+                msg = xmltodict.parse(to_text(msg))['xml']
+            except Exception as e:
+                raise ParseError(e)
 
         encrypt = msg['Encrypt']
         signature = get_sha1_signature(self.__token, timestamp, nonce, encrypt)
