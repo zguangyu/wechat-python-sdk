@@ -21,5 +21,5 @@ setup(
     install_requires=map(lambda x: x.replace('==', '>='), open("requirements.txt").readlines()),
 
     tests_require=['nose', 'httmock'],
-    test_suite='nose.collector',
+    test_suite='tests',
 )
