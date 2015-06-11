@@ -13,7 +13,7 @@ def handle_for_type(type):
     return register
 
 
-class CorpMessage(object):
+class WechatCorpMessage(object):
     def __init__(self, message):
         self.id = int(message.pop('MsgId', 0))
         self.target = message.pop('ToUserName', None)
@@ -24,13 +24,13 @@ class CorpMessage(object):
 
 
 @handle_for_type('text')
-class TextMessage(CorpMessage):
+class TextMessage(WechatCorpMessage):
     def __init__(self, message):
         self.content = message.pop('Content', '')
         super(TextMessage, self).__init__(message)
 
 
-class UnknownMessage(CorpMessage):
+class UnknownMessage(WechatCorpMessage):
     def __init__(self, message):
         self.type = 'unknown'
         super(UnknownMessage, self).__init__(message)

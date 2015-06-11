@@ -2,14 +2,14 @@
 
 import time
 
-from wechat_sdk.corp.messages import CorpMessage
+from wechat_sdk.corp.messages import WechatCorpMessage
 
 
 class CorpReply(object):
     def __init__(self, message=None, **kwargs):
-        if 'source' not in kwargs and isinstance(message, CorpMessage):
+        if 'source' not in kwargs and isinstance(message, WechatCorpMessage):
             kwargs['source'] = message.target
-        if 'target' not in kwargs and isinstance(message, CorpMessage):
+        if 'target' not in kwargs and isinstance(message, WechatCorpMessage):
             kwargs['target'] = message.source
         if 'time' not in kwargs:
             kwargs['time'] = int(time.time())
