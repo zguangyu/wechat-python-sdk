@@ -91,7 +91,7 @@ class LinkMessage(WechatMessage):
 @handle_for_type('event')
 class EventMessage(WechatMessage):
     def __init__(self, message):
-        message.pop('type')
+        message.pop('type', None)
         try:
             self.type = message.pop('Event').lower()
             if self.type == 'subscribe' or self.type == 'scan':

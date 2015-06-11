@@ -19,4 +19,7 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=map(lambda x: x.replace('==', '>='), open("requirements.txt").readlines()),
+
+    tests_require=['nose', 'httmock'],
+    test_suite='tests',
 )

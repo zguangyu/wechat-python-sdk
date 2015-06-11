@@ -12,9 +12,9 @@ from wechat_sdk.corp.exceptions import CorpSignatureError
 from wechat_sdk.crypto import WechatCorpCrypto
 from wechat_sdk.crypto.exceptions import ValidateSignatureError
 from wechat_sdk.exceptions import ParseError, NeedParseError, NeedParamError, OfficialAPIError
-from wechat_sdk.lib import XMLStore, disable_urllib3_warning
+from wechat_sdk.lib import XMLStore
 from wechat_sdk.corp.reply import TextReply
-from wechat_sdk.utils import to_binary, to_text
+from wechat_sdk.utils import to_binary, to_text, disable_urllib3_warning
 
 
 class WechatCorp(WechatBase):
