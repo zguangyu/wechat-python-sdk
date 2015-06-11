@@ -5,7 +5,7 @@ import time
 from wechat_sdk.corp.messages import WechatCorpMessage
 
 
-class CorpReply(object):
+class WechatCorpReply(object):
     def __init__(self, message=None, **kwargs):
         if 'source' not in kwargs and isinstance(message, WechatCorpMessage):
             kwargs['source'] = message.target
@@ -22,7 +22,7 @@ class CorpReply(object):
         raise NotImplementedError()
 
 
-class TextReply(CorpReply):
+class TextReply(WechatCorpReply):
     """
     回复文字消息
     """
