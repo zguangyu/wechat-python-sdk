@@ -102,6 +102,8 @@ class MessagesTestCase(unittest.TestCase):
         })
 
         self.assertEqual(message.type, 'subscribe')
+        self.assertIsNone(message.key)
+        self.assertIsNone(message.ticket)
 
     def test_event_subscribe_ticket_message(self):
         from wechat_sdk.messages import EventMessage
@@ -115,3 +117,135 @@ class MessagesTestCase(unittest.TestCase):
         self.assertEqual(message.type, 'subscribe')
         self.assertEqual(message.key, 'event_key')
         self.assertEqual(message.ticket, 'ticket')
+
+    def test_event_unsubscribe(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'unsubscribe',
+        })
+
+        self.assertEqual(message.type, 'unsubscribe')
+
+    def test_event_scan_no_ticket_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'scan',
+        })
+
+        self.assertEqual(message.type, 'scan')
+        self.assertIsNone(message.key)
+        self.assertIsNone(message.ticket)
+
+    def test_event_scan_ticket_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'scan',
+            'EventKey': 'event_key',
+            'Ticket': 'ticket',
+        })
+
+        self.assertEqual(message.type, 'scan')
+        self.assertEqual(message.key, 'event_key')
+        self.assertEqual(message.ticket, 'ticket')
+
+    def test_event_click_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'click',
+            'EventKey': '你好'
+        })
+
+        self.assertEqual(message.type, 'click')
+        self.assertEqual(message.key, '你好')
+
+    def test_event_view_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'view',
+            'EventKey': 'http://www.baidu.com',
+        })
+
+        self.assertEqual(message.type, 'view')
+        self.assertEqual(message.key, 'http://www.baidu.com')
+
+    def test_event_scancode_push_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'scancode_push',
+            'EventKey': 'picture'
+        })
+
+        self.assertEqual(message.type, 'scancode_push')
+        self.assertEqual(message.key, 'picture')
+
+    def test_event_scancode_waitmsg_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'scancode_waitmsg',
+            'EventKey': 'waitmsg',
+        })
+
+        self.assertEqual(message.type, 'scancode_waitmsg')
+        self.assertEqual(message.key, 'waitmsg')
+
+    def test_event_pic_sysphoto_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'pic_sysphoto',
+            'EventKey': 'sysphoto',
+        })
+
+        self.assertEqual(message.type, 'pic_sysphoto')
+        self.assertEqual(message.key, 'sysphoto')
+
+    def test_event_pic_photo_or_album_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'pic_photo_or_album',
+            'EventKey': 'album',
+        })
+
+        self.assertEqual(message.type, 'pic_photo_or_album')
+        self.assertEqual(message.key, 'album')
+
+    def test_event_pic_weixin_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'pic_weixin',
+            'EventKey': 'weixin',
+        })
+
+        self.assertEqual(message.type, 'pic_weixin')
+        self.assertEqual(message.key, 'weixin')
+
+    def test_voice_message(self):
+        from wechat_sdk.messages import EventMessage
+
+        message = EventMessage({
+            'Event': 'location',
+            'Latitude': '2.112',
+            'Longitude': '1.222',
+            'Precision': '0.2',
+        })
+
+        self.assertEqual(message.type, 'location')
+        self.assertEqual(message.latitude, 2.112)
+        self.assertEqual(message.longitude, 1.222)
+        self.assertEqual(message.precision, 0.2)
+
+    def test_unknown_message(self):
+        from wechat_sdk.messages import UnknownMessage
+
+        message = UnknownMessage({})
+
+        self.assertEqual(message.type, 'unknown')
