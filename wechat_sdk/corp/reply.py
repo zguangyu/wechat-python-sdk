@@ -2,7 +2,7 @@
 
 import time
 
-from wechat_sdk.corp.corp_message import CorpMessage
+from wechat_sdk.corp.messages import CorpMessage
 
 
 class CorpReply(object):

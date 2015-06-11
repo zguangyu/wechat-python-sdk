@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# Like: https://github.com/whtsky/WeRoBot/blob/develop/werobot/messages.py
 
 from wechat_sdk.exceptions import ParseError
 
@@ -10,6 +9,7 @@ def handle_for_type(type):
     def register(f):
         MESSAGE_TYPES[type] = f
         return f
+
     return register
 
 
@@ -19,7 +19,7 @@ class CorpMessage(object):
         self.target = message.pop('ToUserName', None)
         self.source = message.pop('FromUserName', None)
         self.time = int(message.pop('CreateTime', 0))
-        self.agent = int(message.pop('AgentID',0))
+        self.agent = int(message.pop('AgentID', 0))
         self.__dict__.update(message)
 
 

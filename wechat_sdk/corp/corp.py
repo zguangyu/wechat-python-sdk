@@ -7,7 +7,7 @@ import cgi
 import random
 
 from wechat_sdk.base import WechatBase
-from wechat_sdk.corp.message import MESSAGE_TYPES, UnknownMessage
+from wechat_sdk.corp.messages import MESSAGE_TYPES, UnknownMessage
 from wechat_sdk.corp.exceptions import CorpSignatureError
 from wechat_sdk.crypto import WechatCorpCrypto
 from wechat_sdk.crypto.exceptions import ValidateSignatureError
