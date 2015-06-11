@@ -7,15 +7,14 @@ import json
 import cgi
 from StringIO import StringIO
 
-from xml.dom import minidom
+from wechat_sdk.base import WechatBase
+from wechat_sdk.messages import MESSAGE_TYPES, UnknownMessage
+from wechat_sdk.exceptions import ParseError, NeedParseError, NeedParamError, OfficialAPIError
+from wechat_sdk.reply import TextReply, ImageReply, VoiceReply, VideoReply, MusicReply, Article, ArticleReply
+from wechat_sdk.lib import disable_urllib3_warning, XMLStore
 
-from .messages import MESSAGE_TYPES, UnknownMessage
-from .exceptions import ParseError, NeedParseError, NeedParamError, OfficialAPIError
-from .reply import TextReply, ImageReply, VoiceReply, VideoReply, MusicReply, Article, ArticleReply
-from .lib import disable_urllib3_warning, XMLStore
 
-
-class WechatBasic(object):
+class WechatBasic(WechatBase):
     """
     微信基本功能类
 
@@ -944,59 +943,3 @@ class WechatBasic(object):
             url=url,
             **kwargs
         )
-
-    def _transcoding(self, data):
-        """
-        编码转换
-        :param data: 需要转换的数据
-        :return: 转换好的数据
-        """
-        if not data:
-            return data
-
-        result = None
-        if isinstance(data, str):
-            result = data.decode('utf-8')
-        else:
-            result = data
-        return result
-
-    def _transcoding_list(self, data):
-        """
-        编码转换 for list
-        :param data: 需要转换的 list 数据
-        :return: 转换好的 list
-        """
-        if not isinstance(data, list):
-            raise ValueError('Parameter data must be list object.')
-
-        result = []
-        for item in data:
-            if isinstance(item, dict):
-                result.append(self._transcoding_dict(item))
-            elif isinstance(item, list):
-                result.append(self._transcoding_list(item))
-            else:
-                result.append(item)
-        return result
-
-    def _transcoding_dict(self, data):
-        """
-        编码转换 for dict
-        :param data: 需要转换的 dict 数据
-        :return: 转换好的 dict
-        """
-        if not isinstance(data, dict):
-            raise ValueError('Parameter data must be dict object.')
-
-        result = {}
-        for k, v in data.items():
-            k = self._transcoding(k)
-            if isinstance(v, dict):
-                v = self._transcoding_dict(v)
-            elif isinstance(v, list):
-                v = self._transcoding_list(v)
-            else:
-                v = self._transcoding(v)
-            result.update({k: v})
-        return result

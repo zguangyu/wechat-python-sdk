@@ -6,38 +6,48 @@ import json
 import cgi
 import random
 
+from wechat_sdk.base import WechatBase
 from wechat_sdk.corp.message import MESSAGE_TYPES, UnknownMessage
 from wechat_sdk.corp.exceptions import CorpSignatureError
 from wechat_sdk.crypto import WechatCorpCrypto
 from wechat_sdk.crypto.exceptions import ValidateSignatureError
 from wechat_sdk.exceptions import ParseError, NeedParseError, NeedParamError, OfficialAPIError
-from wechat_sdk.lib import XMLStore
+from wechat_sdk.lib import XMLStore, disable_urllib3_warning
 from wechat_sdk.corp.reply import TextReply
 from wechat_sdk.utils import to_binary, to_text
 
 
-class WechatCorp(object):
+class WechatCorp(WechatBase):
     """微信企业号基本功能类"""
 
-    def __init__(self, token=None, corp_id=None, secret=None, access_token=None, access_token_expires_at=None,
-                 encoding_aes_key=None):
+    def __init__(self, token=None, corp_id=None, secret=None, encoding_aes_key=None, access_token=None,
+                 access_token_expires_at=None, jsapi_ticket=None, jsapi_ticket_expires_at=None, checkssl=False):
         """构造函数
 
+        :param token: Token 值
         :param corp_id: Corp ID
         :param secret: Corp Secret
-        :param access_token: 直接导入的 access_token 值, 该值需要在上一次该类实例化之后手动进行缓存并在此处传入, 如果不传入, 将会在需要时自动重新获取
-        :param access_token_expires_at: 直接导入的 access_token 的过期日期，该值需要在上一次该类实例化之后手动进行缓存并在此处传入, 如果不传入, 将会在需要时自动重新获取
         :param encoding_aes_key: EncodingAESKey
+        :param access_token: 直接导入的 access_token 值或 access_token 获取函数
+        :param access_token_expires_at: 直接导入的 access_token 的过期日期（仅在 access_token 参数为非函数时使用）
+        :param jsapi_ticket: 直接导入的 jsapi_ticket 值或 jsapi_ticket 获取函数
+        :param jsapi_ticket_expires_at: 直接导入的 jsapi_ticket 的过期日期（仅在 jsapi_ticket 参数为非函数时使用）
+        :param checkssl: 是否检查 SSL, 默认为 False, 可避免 urllib3 的 InsecurePlatformWarning 警告
         """
+        if not checkssl:
+            disable_urllib3_warning()  # 可解决 InsecurePlatformWarning 警告
 
+        self.__token = token
         self.__corpid = corp_id
         self.__secret = secret
-        self.__token = token
         self.__encoding_aes_key = encoding_aes_key
+        self.__crypto = WechatCorpCrypto(self.__token, self.__encoding_aes_key, self.__corpid)
 
         self.__access_token = access_token
         self.__access_token_expires_at = access_token_expires_at
-        self.__crypto = WechatCorpCrypto(self.__token, self.__encoding_aes_key, self.__corpid)
+        self.__jsapi_ticket = jsapi_ticket
+        self.__jsapi_ticket_expires_at = jsapi_ticket_expires_at
+
         self.__is_parse = False
         self.__message = None
 
@@ -85,7 +95,7 @@ class WechatCorp(object):
         :param echostr: 加密的随机字符串
         :return: 验证URL成功，将sEchoStr返回给企业号
         """
-        self._check_token_EncodingAESKey()
+        self._check_token_encoding_aes_key()
 
         if not msg_signature or not timestamp or not nonce or not echostr:
             raise CorpSignatureError(
@@ -154,14 +164,14 @@ class WechatCorp(object):
             content = cgi.escape(content)
 
         response_xml = TextReply(message=self.__message, content=content).render()
-        return self._EncryptMsg(response_xml)
+        return self._encrypt_message(response_xml)
 
     @property
     def crypto(self):
         """返回加密类 (WechatCropyto)"""
         return self.__crypto
 
-    def _EncryptMsg(self, response_xml):
+    def _encrypt_message(self, response_xml):
         """
         返回加密的xml信息，格式
         <xml>
@@ -195,15 +205,15 @@ class WechatCorp(object):
         :raises NeedParamError: Token 参数没有在初始化的时候提供
         """
         if not self.__corpid or not self.__secret:
-            raise NeedParamError('Please provide CorpID and Secret parameters in the construction of class.')
+            raise NeedParamError('Please provide corp_id and secret parameters in the construction of class.')
 
-    def _check_token_EncodingAESKey(self):
+    def _check_token_encoding_aes_key(self):
         """
         检查 Token, EncodingAESKey 是否存在
-        :raises NeedParamError: Token 参数没有在初始化的时候提供
+        :raise NeedParamError: token 或 encoding_aes_key 参数没有在初始化的时候提供
         """
         if not self.__token or not self.__encoding_aes_key:
-            raise NeedParamError('Please provide Token and EncodingAESKey parameter in the construction of class.')
+            raise NeedParamError('Please provide token and encoding_aes_key parameter in the construction of class.')
 
     def _check_parse(self):
         """
@@ -219,7 +229,7 @@ class WechatCorp(object):
         :raises OfficialAPIError: 如果返回码提示有错误，抛出异常；否则返回 True
         """
         if "errcode" in json_data and json_data["errcode"] != 0:
-            raise OfficialAPIError("{}: {}".format(json_data["errcode"], json_data["errmsg"]))
+            raise OfficialAPIError(errcode=json_data["errcode"], errmsg=json_data["errmsg"])
 
     def _request(self, method, url, **kwargs):
         """
@@ -276,59 +286,3 @@ class WechatCorp(object):
             url=url,
             **kwargs
         )
-
-    def _transcoding(self, data):
-        """
-        编码转换
-        :param data: 需要转换的数据
-        :return: 转换好的数据
-        """
-        if not data:
-            return data
-
-        result = None
-        if isinstance(data, str):
-            result = data.decode('utf-8')
-        else:
-            result = data
-        return result
-
-    def _transcoding_list(self, data):
-        """
-        编码转换 for list
-        :param data: 需要转换的 list 数据
-        :return: 转换好的 list
-        """
-        if not isinstance(data, list):
-            raise ValueError('Parameter data must be list object.')
-
-        result = []
-        for item in data:
-            if isinstance(item, dict):
-                result.append(self._transcoding_dict(item))
-            elif isinstance(item, list):
-                result.append(self._transcoding_list(item))
-            else:
-                result.append(item)
-        return result
-
-    def _transcoding_dict(self, data):
-        """
-        编码转换 for dict
-        :param data: 需要转换的 dict 数据
-        :return: 转换好的 dict
-        """
-        if not isinstance(data, dict):
-            raise ValueError('Parameter data must be dict object.')
-
-        result = {}
-        for k, v in data.items():
-            k = self._transcoding(k)
-            if isinstance(v, dict):
-                v = self._transcoding_dict(v)
-            elif isinstance(v, list):
-                v = self._transcoding_list(v)
-            else:
-                v = self._transcoding(v)
-            result.update({k: v})
-        return result
