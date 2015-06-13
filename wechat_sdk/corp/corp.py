@@ -21,7 +21,7 @@ from wechat_sdk.utils import to_binary, to_text, disable_urllib3_warning
 class WechatCorp(WechatBase):
     """微信企业号基本功能类"""
 
-    def __init__(self, token, corp_id, secret, encoding_aes_key, agent_id=0, access_token=None,
+    def __init__(self, token, corp_id, secret, encoding_aes_key, agent_id, access_token=None,
                  access_token_expires_at=None, jsapi_ticket=None, jsapi_ticket_expires_at=None, checkssl=False):
         """构造函数
 
@@ -29,6 +29,7 @@ class WechatCorp(WechatBase):
         :param corp_id: Corp ID
         :param secret: Corp Secret
         :param encoding_aes_key: EncodingAESKey
+        :param agent_id: Agent ID (接收应用的ID)
         :param access_token: 直接导入的 access_token 值或 access_token 获取函数
         :param access_token_expires_at: 直接导入的 access_token 的过期日期（仅在 access_token 参数为非函数时使用）
         :param jsapi_ticket: 直接导入的 jsapi_ticket 值或 jsapi_ticket 获取函数
