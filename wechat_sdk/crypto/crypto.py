@@ -43,8 +43,8 @@ class WechatBaseCrypto(object):
         pc = BaseCrypto(self.__key)
         try:
             return pc.decrypt(echostr, self.__id)
-        except DecryptAESError:
-            raise ValidateSignatureError()
+        except DecryptAESError as e:
+            raise ValidateSignatureError(e)
 
     def _encrypt_message(self, msg, nonce, timestamp=None):
         """将公众号回复用户的消息加密打包

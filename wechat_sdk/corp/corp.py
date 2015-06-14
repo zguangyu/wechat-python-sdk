@@ -21,7 +21,7 @@ from wechat_sdk.utils import to_binary, to_text, disable_urllib3_warning
 class WechatCorp(WechatBase):
     """微信企业号基本功能类"""
 
-    def __init__(self, token, corp_id, secret, encoding_aes_key, agent_id, access_token=None,
+    def __init__(self, token=None, corp_id=None, secret=None, encoding_aes_key=None, agent_id=None, access_token=None,
                  access_token_expires_at=None, jsapi_ticket=None, jsapi_ticket_expires_at=None, checkssl=False):
         """构造函数
 

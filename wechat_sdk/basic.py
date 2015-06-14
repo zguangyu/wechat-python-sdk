@@ -76,8 +76,9 @@ class WechatBasic(WechatBase):
             return False
 
     def generate_jsapi_signature(self, timestamp, noncestr, url, jsapi_ticket=None):
-        """
-        使用 jsapi_ticket 对 url 进行签名
+        """使用 jsapi_ticket 对 url 进行签名
+
+        调用前检查 appid 及 appsecret 是否已正确传入。
         :param timestamp: 时间戳
         :param noncestr: 随机数
         :param url: 要签名的 url，不包含 # 及其后面部分
