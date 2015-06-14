@@ -650,8 +650,6 @@ class WechatCorp(WechatBase):
         """
         获取企业号应用
         该API用于获取企业号某个应用的基本信息，包括头像、昵称、帐号类型、认证类型、可见范围等信息
-        :param agentid:
-        :return:
         """
 
         self._check_corpid_secret()
@@ -670,8 +668,6 @@ class WechatCorp(WechatBase):
         """
         设置企业号应用
         该API用于设置企业应用的选项设置信息，如：地理位置上报等
-        :param agentid:
-        :return:
         """
         self._check_corpid_secret()
 
