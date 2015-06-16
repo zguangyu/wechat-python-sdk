@@ -177,3 +177,33 @@ class WechatBasicTestCase(unittest.TestCase):
         self.assertEqual(message.time, 1348831860)
         self.assertEqual(message.type, 'text')
         self.assertEqual(message.content, 'this is a test')
+
+    def test_parse_data_image_message(self):
+        # 测试错误消息解析
+        bad_message = 'werqfas'
+        wechat = WechatBasic()
+        with self.assertRaises(ParseError):
+            wechat.parse_data(data=bad_message)
+
+        # 测试正确消息解析
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1348831860</CreateTime>
+<MsgType><![CDATA[image]]></MsgType>
+<PicUrl><![CDATA[this is a url]]></PicUrl>
+<MediaId><![CDATA[media_id]]></MediaId>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, ImageMessage)
+        self.assertEqual(message.id, 1234567890123456)
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 1348831860)
+        self.assertEqual(message.type, 'image')
+        self.assertEqual(message.media_id, 'media_id')
