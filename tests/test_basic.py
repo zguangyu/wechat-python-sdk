@@ -9,7 +9,10 @@ from httmock import urlmatch, HTTMock, response
 
 from wechat_sdk import WechatBasic
 from wechat_sdk.exceptions import NeedParamError, ParseError
-from wechat_sdk.messages import TextMessage, ImageMessage, VoiceMessage, VideoMessage, ShortVideoMessage, LinkMessage, LocationMessage, UnknownMessage
+from wechat_sdk.messages import (
+    TextMessage, ImageMessage, VoiceMessage, VideoMessage, ShortVideoMessage, LinkMessage,
+    LocationMessage, EventMessage, UnknownMessage
+)
 
 
 TESTS_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -149,14 +152,13 @@ class WechatBasicTestCase(unittest.TestCase):
             signature = wechat.generate_jsapi_signature(timestamp=timestamp, noncestr=noncestr, url=url, jsapi_ticket=jsapi_ticket)
             self.assertEqual(signature, '0f9de62fce790f9a083d5c99e95740ceb90c27ed')
 
-    def test_parse_data_text_message(self):
-        # 测试错误消息解析
+    def test_parse_data_bad_message(self):
         bad_message = 'xml>a2341'
         wechat = WechatBasic()
         with self.assertRaises(ParseError):
             wechat.parse_data(data=bad_message)
 
-        # 测试正确消息解析
+    def test_parse_data_text_message(self):
         message = """<xml>
 <ToUserName><![CDATA[toUser]]></ToUserName>
 <FromUserName><![CDATA[fromUser]]></FromUserName>
@@ -179,13 +181,6 @@ class WechatBasicTestCase(unittest.TestCase):
         self.assertEqual(message.content, 'this is a test')
 
     def test_parse_data_image_message(self):
-        # 测试错误消息解析
-        bad_message = 'werqfas'
-        wechat = WechatBasic()
-        with self.assertRaises(ParseError):
-            wechat.parse_data(data=bad_message)
-
-        # 测试正确消息解析
         message = """<xml>
 <ToUserName><![CDATA[toUser]]></ToUserName>
 <FromUserName><![CDATA[fromUser]]></FromUserName>
@@ -207,3 +202,308 @@ class WechatBasicTestCase(unittest.TestCase):
         self.assertEqual(message.time, 1348831860)
         self.assertEqual(message.type, 'image')
         self.assertEqual(message.media_id, 'media_id')
+
+    def test_parse_data_voice_message(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1357290913</CreateTime>
+<MsgType><![CDATA[voice]]></MsgType>
+<MediaId><![CDATA[media_id]]></MediaId>
+<Format><![CDATA[Format]]></Format>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, VoiceMessage)
+        self.assertEqual(message.id, 1234567890123456)
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 1357290913)
+        self.assertEqual(message.type, 'voice')
+        self.assertEqual(message.media_id, 'media_id')
+        self.assertEqual(message.format, 'Format')
+        self.assertIsNone(message.recognition)
+
+    def test_parse_data_voice_recognition(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1357290913</CreateTime>
+<MsgType><![CDATA[voice]]></MsgType>
+<MediaId><![CDATA[media_id]]></MediaId>
+<Format><![CDATA[Format]]></Format>
+<Recognition><![CDATA[腾讯微信团队]]></Recognition>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, VoiceMessage)
+        self.assertEqual(message.id, 1234567890123456)
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 1357290913)
+        self.assertEqual(message.type, 'voice')
+        self.assertEqual(message.media_id, 'media_id')
+        self.assertEqual(message.format, 'Format')
+        self.assertEqual(message.recognition, '腾讯微信团队')
+
+    def test_parse_data_video_message(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1357290913</CreateTime>
+<MsgType><![CDATA[video]]></MsgType>
+<MediaId><![CDATA[media_id]]></MediaId>
+<ThumbMediaId><![CDATA[thumb_media_id]]></ThumbMediaId>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, VideoMessage)
+        self.assertEqual(message.id, 1234567890123456)
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 1357290913)
+        self.assertEqual(message.type, 'video')
+        self.assertEqual(message.media_id, 'media_id')
+        self.assertEqual(message.thumb_media_id, 'thumb_media_id')
+
+    def test_parse_data_short_video_message(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1357290913</CreateTime>
+<MsgType><![CDATA[shortvideo]]></MsgType>
+<MediaId><![CDATA[media_id]]></MediaId>
+<ThumbMediaId><![CDATA[thumb_media_id]]></ThumbMediaId>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, ShortVideoMessage)
+        self.assertEqual(message.id, 1234567890123456)
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 1357290913)
+        self.assertEqual(message.type, 'shortvideo')
+        self.assertEqual(message.media_id, 'media_id')
+        self.assertEqual(message.thumb_media_id, 'thumb_media_id')
+
+    def test_parse_data_location_message(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1351776360</CreateTime>
+<MsgType><![CDATA[location]]></MsgType>
+<Location_X>23.134521</Location_X>
+<Location_Y>113.358803</Location_Y>
+<Scale>20</Scale>
+<Label><![CDATA[位置信息]]></Label>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, LocationMessage)
+        self.assertEqual(message.id, 1234567890123456)
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 1351776360)
+        self.assertEqual(message.type, 'location')
+        self.assertEqual(message.location, (23.134521, 113.358803))
+        self.assertEqual(message.scale, 20)
+        self.assertEqual(message.label, '位置信息')
+
+    def test_parse_data_link_message(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1351776360</CreateTime>
+<MsgType><![CDATA[link]]></MsgType>
+<Title><![CDATA[公众平台官网链接]]></Title>
+<Description><![CDATA[公众平台官网链接]]></Description>
+<Url><![CDATA[url]]></Url>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, LinkMessage)
+        self.assertEqual(message.id, 1234567890123456)
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 1351776360)
+        self.assertEqual(message.type, 'link')
+        self.assertEqual(message.title, '公众平台官网链接')
+        self.assertEqual(message.description, '公众平台官网链接')
+        self.assertEqual(message.url, 'url')
+
+    def test_parse_data_subscribe_event(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[FromUser]]></FromUserName>
+<CreateTime>123456789</CreateTime>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><![CDATA[subscribe]]></Event>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, EventMessage)
+        self.assertEqual(message.type, 'subscribe')
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'FromUser')
+        self.assertEqual(message.time, 123456789)
+        self.assertIsNone(message.ticket)
+        self.assertIsNone(message.key)
+
+    def test_parse_data_unsubscribe_event(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[FromUser]]></FromUserName>
+<CreateTime>123456789</CreateTime>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><![CDATA[unsubscribe]]></Event>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, EventMessage)
+        self.assertEqual(message.type, 'unsubscribe')
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'FromUser')
+        self.assertEqual(message.time, 123456789)
+
+    def test_parse_data_subscribe_qrscene_event(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[FromUser]]></FromUserName>
+<CreateTime>123456789</CreateTime>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><![CDATA[subscribe]]></Event>
+<EventKey><![CDATA[qrscene_123123]]></EventKey>
+<Ticket><![CDATA[TICKET]]></Ticket>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, EventMessage)
+        self.assertEqual(message.type, 'subscribe')
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'FromUser')
+        self.assertEqual(message.time, 123456789)
+        self.assertEqual(message.key, 'qrscene_123123')
+        self.assertEqual(message.ticket, 'TICKET')
+
+    def test_parse_data_scan_event(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[FromUser]]></FromUserName>
+<CreateTime>123456789</CreateTime>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><![CDATA[SCAN]]></Event>
+<EventKey><![CDATA[SCENE_VALUE]]></EventKey>
+<Ticket><![CDATA[TICKET]]></Ticket>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, EventMessage)
+        self.assertEqual(message.type, 'scan')
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'FromUser')
+        self.assertEqual(message.time, 123456789)
+        self.assertEqual(message.key, 'SCENE_VALUE')
+        self.assertEqual(message.ticket, 'TICKET')
+
+    def test_parse_data_location_event(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>123456789</CreateTime>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><![CDATA[LOCATION]]></Event>
+<Latitude>23.137466</Latitude>
+<Longitude>113.352425</Longitude>
+<Precision>119.385040</Precision>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, EventMessage)
+        self.assertEqual(message.type, 'location')
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'fromUser')
+        self.assertEqual(message.time, 123456789)
+        self.assertEqual(message.latitude, 23.137466)
+        self.assertEqual(message.longitude, 113.352425)
+        self.assertEqual(message.precision, 119.385040)
+
+    def test_parse_data_click_event(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[FromUser]]></FromUserName>
+<CreateTime>123456789</CreateTime>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><![CDATA[CLICK]]></Event>
+<EventKey><![CDATA[EVENTKEY]]></EventKey>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, EventMessage)
+        self.assertEqual(message.type, 'click')
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'FromUser')
+        self.assertEqual(message.time, 123456789)
+        self.assertEqual(message.key, 'EVENTKEY')
+
+    def test_parse_data_view_event(self):
+        message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[FromUser]]></FromUserName>
+<CreateTime>123456789</CreateTime>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><![CDATA[VIEW]]></Event>
+<EventKey><![CDATA[www.qq.com]]></EventKey>
+</xml>"""
+
+        wechat = WechatBasic()
+        wechat.parse_data(data=message)
+        message = wechat.message
+
+        self.assertIsInstance(message, EventMessage)
+        self.assertEqual(message.type, 'view')
+        self.assertEqual(message.target, 'toUser')
+        self.assertEqual(message.source, 'FromUser')
+        self.assertEqual(message.time, 123456789)
+        self.assertEqual(message.key, 'www.qq.com')
