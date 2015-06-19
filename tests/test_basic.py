@@ -645,3 +645,114 @@ class WechatBasicTestCase(unittest.TestCase):
         self.assertEqual(resp['xml']['Articles']['item'][2]['Description'], '第三条新闻描述')
         self.assertEqual(resp['xml']['Articles']['item'][2]['Url'], 'http://www.v2ex.com/')
         self.assertEqual(resp['xml']['Articles']['item'][2]['PicUrl'], 'http://doraemonext.oss-cn-hangzhou.aliyuncs.com/test/wechat-test.jpg')
+
+    def test_create_menu(self):
+        menu_info = {
+            'button': [
+                {
+                    'type': 'click',
+                    'name': '今日歌曲',
+                    'key': 'V1001_TODAY_MUSIC'
+                },
+                {
+                    'type': 'click',
+                    'name': '歌手简介',
+                    'key': 'V1001_TODAY_SINGER'
+                },
+                {
+                    'name': '菜单',
+                    'sub_button': [
+                        {
+                            'type': 'view',
+                            'name': '搜索',
+                            'url': 'http://www.soso.com/'
+                        },
+                        {
+                            'type': 'view',
+                            'name': '视频',
+                            'url': 'http://v.qq.com/'
+                        },
+                        {
+                            'type': 'click',
+                            'name': '赞一下我们',
+                            'key': 'V1001_GOOD'
+                        }
+                    ]
+                }
+            ]
+        }
+
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.create_menu(menu_info)
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.create_menu(menu_info)
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
+
+    def test_get_menu(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.get_menu()
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.get_menu()
+            self.assertEqual(resp['menu'], {
+                "button": [
+                    {
+                        "type": "click",
+                        "name": "今日歌曲",
+                        "key": "V1001_TODAY_MUSIC",
+                        "sub_button": []
+                    },
+                    {
+                        "type": "click",
+                        "name": "歌手简介",
+                        "key": "V1001_TODAY_SINGER",
+                        "sub_button": []
+                    },
+                    {
+                        "name": "菜单",
+                        "sub_button": [
+                            {
+                                "type": "view",
+                                "name": "搜索",
+                                "url": "http://www.soso.com/",
+                                "sub_button": []
+                            },
+                            {
+                                "type": "view",
+                                "name": "视频",
+                                "url": "http://v.qq.com/",
+                                "sub_button": []
+                            },
+                            {
+                                "type": "click",
+                                "name": "赞一下我们",
+                                "key": "V1001_GOOD",
+                                "sub_button": []
+                            }
+                        ]
+                    }
+                ]
+            })
+
+    def test_delete_menu(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.delete_menu()
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.delete_menu()
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
