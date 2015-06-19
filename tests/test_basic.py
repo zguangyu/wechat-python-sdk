@@ -48,6 +48,15 @@ class WechatBasicTestCase(unittest.TestCase):
     fixtures_access_token = 'HoVFaIslbrofqJgkR0Svcx2d4za0RJKa3H6A_NjzhBbm96Wtg_a3ifUYQvOfJmV76QTcCpNubcsnOLmDopu2hjWfFeQSCE4c8QrsxwE_N3w'
     fixtures_jsapi_ticket = 'bxLdikRXVbTPdHSM05e5u5sUoXNKd8-41ZO3MhKoyN5OfkWITDGgnr2fwJ0m9E8NYzWKVZvdVtaUgWvsdshFKA'
 
+    test_message = """<xml>
+<ToUserName><![CDATA[toUser]]></ToUserName>
+<FromUserName><![CDATA[fromUser]]></FromUserName>
+<CreateTime>1348831860</CreateTime>
+<MsgType><![CDATA[text]]></MsgType>
+<Content><![CDATA[测试信息]]></Content>
+<MsgId>1234567890123456</MsgId>
+</xml>"""
+
     def test_check_signature(self):
         signature = '41f929117dd6231a953f632cfb3be174b8e3ef08'
         timestamp = '1434295379'
@@ -507,3 +516,91 @@ class WechatBasicTestCase(unittest.TestCase):
         self.assertEqual(message.source, 'FromUser')
         self.assertEqual(message.time, 123456789)
         self.assertEqual(message.key, 'www.qq.com')
+
+    def test_response_text(self):
+        wechat = WechatBasic()
+        wechat.parse_data(data=self.test_message)
+
+        response_xml_1 = wechat.response_text('test message')
+        response_xml_2 = wechat.response_text('测试文本')
+        response_xml_3 = wechat.response_text(u'测试文本')
+        response_xml_4 = wechat.response_text('<h1>你好</h1>')
+        response_xml_5 = wechat.response_text('<h1>你好</h1>', escape=True)
+        response_1 = xmltodict.parse(response_xml_1)
+        response_2 = xmltodict.parse(response_xml_2)
+        response_3 = xmltodict.parse(response_xml_3)
+        response_4 = xmltodict.parse(response_xml_4)
+        response_5 = xmltodict.parse(response_xml_5)
+
+        self.assertEqual(response_1['xml']['ToUserName'], 'fromUser')
+        self.assertEqual(response_1['xml']['FromUserName'], 'toUser')
+        self.assertEqual(response_1['xml']['MsgType'], 'text')
+
+        self.assertEqual(response_1['xml']['Content'], 'test message')
+        self.assertEqual(response_2['xml']['Content'], '测试文本')
+        self.assertEqual(response_3['xml']['Content'], '测试文本')
+        self.assertEqual(response_4['xml']['Content'], '<h1>你好</h1>')
+        self.assertEqual(response_5['xml']['Content'], '&lt;h1&gt;你好&lt;/h1&gt;')
+
+    def test_response_image(self):
+        wechat = WechatBasic()
+        wechat.parse_data(data=self.test_message)
+
+        resp_xml = wechat.response_image(media_id='xurkvi9gl')
+        resp = xmltodict.parse(resp_xml)
+
+        self.assertEqual(resp['xml']['ToUserName'], 'fromUser')
+        self.assertEqual(resp['xml']['FromUserName'], 'toUser')
+        self.assertEqual(resp['xml']['MsgType'], 'image')
+        self.assertEqual(resp['xml']['Image']['MediaId'], 'xurkvi9gl')
+
+    def test_response_voice(self):
+        wechat = WechatBasic()
+        wechat.parse_data(data=self.test_message)
+
+        resp_xml = wechat.response_voice(media_id='xurkvi9gl')
+        resp = xmltodict.parse(resp_xml)
+
+        self.assertEqual(resp['xml']['ToUserName'], 'fromUser')
+        self.assertEqual(resp['xml']['FromUserName'], 'toUser')
+        self.assertEqual(resp['xml']['MsgType'], 'voice')
+        self.assertEqual(resp['xml']['Voice']['MediaId'], 'xurkvi9gl')
+
+    def test_response_video(self):
+        wechat = WechatBasic()
+        wechat.parse_data(data=self.test_message)
+
+        resp_xml = wechat.response_video(
+            media_id='xurkvi9gl',
+            title='测试视频',
+            description='测试描述',
+        )
+        resp = xmltodict.parse(resp_xml)
+
+        self.assertEqual(resp['xml']['ToUserName'], 'fromUser')
+        self.assertEqual(resp['xml']['FromUserName'], 'toUser')
+        self.assertEqual(resp['xml']['MsgType'], 'video')
+        self.assertEqual(resp['xml']['Video']['MediaId'], 'xurkvi9gl')
+        self.assertEqual(resp['xml']['Video']['Title'], '测试视频')
+        self.assertEqual(resp['xml']['Video']['Description'], '测试描述')
+
+    def test_response_music(self):
+        wechat = WechatBasic()
+        wechat.parse_data(data=self.test_message)
+
+        resp_xml = wechat.response_music(
+            music_url='http://mp3.baidu.com',
+            title='测试音乐',
+            description='测试描述',
+            hq_music_url='http://baidu.com/',
+        )
+        resp = xmltodict.parse(resp_xml)
+
+        self.assertEqual(resp['xml']['ToUserName'], 'fromUser')
+        self.assertEqual(resp['xml']['FromUserName'], 'toUser')
+        self.assertEqual(resp['xml']['MsgType'], 'music')
+        self.assertEqual(resp['xml']['Music']['Title'], '测试音乐')
+        self.assertEqual(resp['xml']['Music']['Description'], '测试描述')
+        self.assertEqual(resp['xml']['Music']['MusicUrl'], 'http://mp3.baidu.com')
+        self.assertEqual(resp['xml']['Music']['HQMusicUrl'], 'http://baidu.com/')
+
