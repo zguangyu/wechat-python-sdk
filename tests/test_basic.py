@@ -604,3 +604,44 @@ class WechatBasicTestCase(unittest.TestCase):
         self.assertEqual(resp['xml']['Music']['MusicUrl'], 'http://mp3.baidu.com')
         self.assertEqual(resp['xml']['Music']['HQMusicUrl'], 'http://baidu.com/')
 
+    def test_response_news(self):
+        wechat = WechatBasic()
+        wechat.parse_data(data=self.test_message)
+
+        resp_xml = wechat.response_news(articles=[
+            {
+                'title': '第一条新闻标题',
+                'description': '第一条新闻描述，这条新闻没有预览图',
+                'url': 'http://www.google.com.hk/',
+            }, {
+                'title': '第二条新闻标题, 这条新闻无描述',
+                'picurl': 'http://doraemonext.oss-cn-hangzhou.aliyuncs.com/test/wechat-test.jpg',
+                'url': 'http://www.github.com/',
+            }, {
+                'title': '第三条新闻标题',
+                'description': '第三条新闻描述',
+                'picurl': 'http://doraemonext.oss-cn-hangzhou.aliyuncs.com/test/wechat-test.jpg',
+                'url': 'http://www.v2ex.com/',
+            }
+        ])
+        resp = xmltodict.parse(resp_xml)
+
+        self.assertEqual(resp['xml']['ToUserName'], 'fromUser')
+        self.assertEqual(resp['xml']['FromUserName'], 'toUser')
+        self.assertEqual(resp['xml']['MsgType'], 'news')
+        self.assertEqual(resp['xml']['ArticleCount'], '3')
+
+        self.assertEqual(resp['xml']['Articles']['item'][0]['Title'], '第一条新闻标题')
+        self.assertEqual(resp['xml']['Articles']['item'][0]['Description'], '第一条新闻描述，这条新闻没有预览图')
+        self.assertEqual(resp['xml']['Articles']['item'][0]['Url'], 'http://www.google.com.hk/')
+        self.assertIsNone(resp['xml']['Articles']['item'][0]['PicUrl'])
+
+        self.assertEqual(resp['xml']['Articles']['item'][1]['Title'], '第二条新闻标题, 这条新闻无描述')
+        self.assertIsNone(resp['xml']['Articles']['item'][1]['Description'])
+        self.assertEqual(resp['xml']['Articles']['item'][1]['Url'], 'http://www.github.com/')
+        self.assertEqual(resp['xml']['Articles']['item'][1]['PicUrl'], 'http://doraemonext.oss-cn-hangzhou.aliyuncs.com/test/wechat-test.jpg')
+
+        self.assertEqual(resp['xml']['Articles']['item'][2]['Title'], '第三条新闻标题')
+        self.assertEqual(resp['xml']['Articles']['item'][2]['Description'], '第三条新闻描述')
+        self.assertEqual(resp['xml']['Articles']['item'][2]['Url'], 'http://www.v2ex.com/')
+        self.assertEqual(resp['xml']['Articles']['item'][2]['PicUrl'], 'http://doraemonext.oss-cn-hangzhou.aliyuncs.com/test/wechat-test.jpg')
