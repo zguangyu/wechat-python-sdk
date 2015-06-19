@@ -756,3 +756,67 @@ class WechatBasicTestCase(unittest.TestCase):
             resp = wechat.delete_menu()
             self.assertEqual(resp['errcode'], 0)
             self.assertEqual(resp['errmsg'], 'ok')
+
+    def test_create_group(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.create_group('测试组')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.create_group('测试组')
+            self.assertEqual(resp['group']['id'], 107)
+            self.assertEqual(resp['group']['name'], 'test')
+
+    def test_get_group(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.get_groups()
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.get_groups()
+            self.assertEqual(resp['groups'][0]['id'], 0)
+            self.assertEqual(resp['groups'][0]['name'], '未分组')
+            self.assertEqual(resp['groups'][0]['count'], 72596)
+            self.assertEqual(resp['groups'][1]['id'], 1)
+            self.assertEqual(resp['groups'][1]['name'], '黑名单')
+            self.assertEqual(resp['groups'][1]['count'], 36)
+            self.assertEqual(resp['groups'][2]['id'], 2)
+            self.assertEqual(resp['groups'][2]['name'], '星标组')
+            self.assertEqual(resp['groups'][2]['count'], 8)
+            self.assertEqual(resp['groups'][3]['id'], 104)
+            self.assertEqual(resp['groups'][3]['name'], '华东媒')
+            self.assertEqual(resp['groups'][3]['count'], 4)
+            self.assertEqual(resp['groups'][4]['id'], 106)
+            self.assertEqual(resp['groups'][4]['name'], '★不测试组★')
+            self.assertEqual(resp['groups'][4]['count'], 1)
+
+    def test_get_group_by_id(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.get_group_by_id('13441123412341')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.get_group_by_id('12554647777')
+            self.assertEqual(resp['groupid'], 102)
+
+    def test_update_group(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.update_group(23, 'asfff')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.update_group(11, '113444')
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
