@@ -8,6 +8,7 @@ import cgi
 from StringIO import StringIO
 
 from wechat_sdk.base import WechatBase
+from wechat_sdk.crypto import WechatCrypto
 from wechat_sdk.messages import MESSAGE_TYPES, UnknownMessage
 from wechat_sdk.exceptions import ParseError, NeedParseError, NeedParamError, OfficialAPIError
 from wechat_sdk.reply import TextReply, ImageReply, VoiceReply, VideoReply, MusicReply, Article, ArticleReply
@@ -21,13 +22,14 @@ class WechatBasic(WechatBase):
 
     仅包含官方 API 中所包含的内容, 如需高级功能支持请移步 ext.py 中的 WechatExt 类
     """
-    def __init__(self, token=None, appid=None, appsecret=None, partnerid=None,
+    def __init__(self, token=None, appid=None, appsecret=None,  partnerid=None, encoding_aes_key=None,
                  partnerkey=None, paysignkey=None, access_token=None, access_token_expires_at=None,
                  jsapi_ticket=None, jsapi_ticket_expires_at=None, checkssl=False):
         """
         :param token: 微信 Token
         :param appid: App ID
         :param appsecret: App Secret
+        :param encoding_aes_key: EncodingAESKey 值（传入此值必须保证同时传入 token, appid，否则报错)
         :param partnerid: 财付通商户身份标识, 支付权限专用
         :param partnerkey: 财付通商户权限密钥 Key, 支付权限专用
         :param paysignkey: 商户签名密钥 Key, 支付权限专用
@@ -51,6 +53,15 @@ class WechatBasic(WechatBase):
         self.__access_token_expires_at = access_token_expires_at
         self.__jsapi_ticket = jsapi_ticket
         self.__jsapi_ticket_expires_at = jsapi_ticket_expires_at
+
+        self.__encoding_aes_key = None
+        self.__crypto = None
+        if encoding_aes_key:
+            if not token or not appid:
+                raise NeedParamError('Please provide token and appid parameters in the construction of class.')
+            self.__encoding_aes_key = encoding_aes_key
+            self.__crypto = WechatCrypto(self.__token, self.__encoding_aes_key, self.__appid)
+
         self.__is_parse = False
         self.__message = None
 
