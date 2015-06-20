@@ -898,8 +898,8 @@ class WechatBasic(WechatBase):
         检测微信公众平台返回值中是否包含错误的返回码
         :raises OfficialAPIError: 如果返回码提示有错误，抛出异常；否则返回 True
         """
-        if "errcode" in json_data and json_data["errcode"] != 0:
-            raise OfficialAPIError(errcode=json_data["errcode"], errmsg=json_data["errmsg"])
+        if 'errcode' in json_data and json_data['errcode'] != 0:
+            raise OfficialAPIError(errcode=json_data.get('errcode'), errmsg=json_data.get('errmsg', ''))
 
     def _request(self, method, url, **kwargs):
         """
