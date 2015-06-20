@@ -971,16 +971,68 @@ class WechatBasicTestCase(unittest.TestCase):
             self.assertEqual(resp['errmsg'], 'ok')
 
     def test_create_qrcode(self):
-        pass
+        data = {"action_name": "QR_LIMIT_STR_SCENE", "action_info": {"scene": {"scene_str": "123"}}}
 
-    def test_show_qrcode(self):
-        pass
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.create_qrcode(data)
 
-    def test_set_template_industry(self):
-        pass
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.create_qrcode(data)
+            self.assertEqual(resp['ticket'], 'gQH47joAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xL2taZ2Z3TVRtNzJXV1Brb3ZhYmJJAAIEZ23sUwMEmm3sUw==')
+            self.assertEqual(resp['expire_seconds'], 60)
+            self.assertEqual(resp['url'], 'http://weixin.qq.com/q/kZgfwMTm72WWPkovabbI')
 
     def test_get_template_id(self):
-        pass
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.get_template_id('aafeewr')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.get_template_id('123412431234')
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
+            self.assertEqual(resp['template_id'], 'Doclyl5uP7Aciu-qZ7mJNPtWkbkYnWBWVja26EGbNyk')
 
     def test_send_template_message(self):
-        pass
+        data = {
+            "first": {
+                "value": "恭喜你购买成功！",
+                "color": "#173177"
+            },
+            "keynote1": {
+                "value": "巧克力",
+                "color": "#173177"
+            },
+            "keynote2": {
+                "value": "39.8元",
+                "color": "#173177"
+            },
+            "keynote3": {
+                "value": "2014年9月16日",
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "欢迎再次购买！",
+                "color": "#173177"
+            }
+        }
+
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.send_template_message('12341234', '123412341234', data)
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.send_template_message('12341234', '123412341', data)
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
+            self.assertEqual(resp['msgid'], 200228332)
