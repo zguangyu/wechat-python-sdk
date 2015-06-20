@@ -8,7 +8,7 @@ import xmltodict
 from httmock import urlmatch, HTTMock, response
 
 from wechat_sdk import WechatBasic
-from wechat_sdk.exceptions import NeedParamError, ParseError
+from wechat_sdk.exceptions import NeedParamError, ParseError, OfficialAPIError
 from wechat_sdk.messages import (
     TextMessage, ImageMessage, VoiceMessage, VideoMessage, ShortVideoMessage, LinkMessage,
     LocationMessage, EventMessage, UnknownMessage
@@ -1036,3 +1036,23 @@ class WechatBasicTestCase(unittest.TestCase):
             self.assertEqual(resp['errcode'], 0)
             self.assertEqual(resp['errmsg'], 'ok')
             self.assertEqual(resp['msgid'], 200228332)
+
+    def test_check_official_error(self):
+        wechat = WechatBasic()
+
+        data = {
+            'errcode': 10001,
+            'errmsg': 'test error message'
+        }
+        with self.assertRaises(OfficialAPIError) as exc:
+            wechat._check_official_error(data)
+        self.assertEqual(exc.exception.errcode, 10001)
+        self.assertEqual(exc.exception.errmsg, 'test error message')
+        self.assertEqual(exc.exception.__str__(), '10001: test error message')
+
+        data = {'errcode': 10000}
+        with self.assertRaises(OfficialAPIError) as exc:
+            wechat._check_official_error(data)
+        self.assertEqual(exc.exception.errcode, 10000)
+        self.assertEqual(exc.exception.errmsg, '')
+        self.assertEqual(exc.exception.__str__(), '10000: ')
