@@ -820,3 +820,90 @@ class WechatBasicTestCase(unittest.TestCase):
             resp = wechat.update_group(11, '113444')
             self.assertEqual(resp['errcode'], 0)
             self.assertEqual(resp['errmsg'], 'ok')
+
+    def test_move_user(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.move_user("123412", 1241234)
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.update_group("21341", 12341234)
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
+
+    def test_get_user_info(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.get_user_info('123412412341234')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.get_user_info('3253634563425234')
+            self.assertEqual(resp['subscribe'], 1)
+            self.assertEqual(resp['openid'], 'o6_bmjrPTlm6_2sgVt7hMZOPfL2M')
+            self.assertEqual(resp['nickname'], 'Band')
+            self.assertEqual(resp['sex'], 1)
+            self.assertEqual(resp['language'], 'zh_CN')
+            self.assertEqual(resp['city'], '广州')
+            self.assertEqual(resp['province'], '广东')
+            self.assertEqual(resp['country'], '中国')
+            self.assertEqual(resp['headimgurl'], 'http://wx.qlogo.cn/mmopen/g3MonUZtNHkdmzicIlibx6iaFqAc56vxLSUfpb6n5WKSYVY0ChQKkiaJSgQ1dZuTOgvLLrhJbERQQ4eMsv84eavHiaiceqxibJxCfHe/0')
+            self.assertEqual(resp['subscribe_time'], 1382694957)
+            self.assertEqual(resp['unionid'], 'o6_bmasdasdsad6_2sgVt7hMZOPfL')
+            self.assertEqual(resp['remark'], '')
+            self.assertEqual(resp['groupid'], 0)
+
+    def test_get_followers(self):
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.get_followers()
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.get_followers()
+            self.assertEqual(resp['total'], 2)
+            self.assertEqual(resp['count'], 2)
+            self.assertEqual(resp['data'], {
+                'openid': ['', 'OPENID1', 'OPENID2']
+            })
+            self.assertEqual(resp['next_openid'], 'NEXT_OPENID')
+
+    def test_send_text_message(self):
+        pass
+
+    def test_send_image_message(self):
+        pass
+
+    def test_send_voice_message(self):
+        pass
+
+    def test_send_video_message(self):
+        pass
+
+    def test_send_music_message(self):
+        pass
+
+    def test_article_message(self):
+        pass
+
+    def test_create_qrcode(self):
+        pass
+
+    def test_show_qrcode(self):
+        pass
+
+    def test_set_template_industry(self):
+        pass
+
+    def test_get_template_id(self):
+        pass
+
+    def test_send_template_message(self):
+        pass
