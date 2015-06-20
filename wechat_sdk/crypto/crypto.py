@@ -2,7 +2,9 @@
 
 import base64
 import time
+
 import six
+import xmltodict
 
 from wechat_sdk.exceptions import ParseError
 from wechat_sdk.crypto.base import BaseCrypto
@@ -82,7 +84,6 @@ class WechatBaseCrypto(object):
         :return: 解密后的原文
         """
         if isinstance(msg, six.string_types):
-            import xmltodict
             try:
                 msg = xmltodict.parse(to_text(msg))['xml']
             except Exception as e:
