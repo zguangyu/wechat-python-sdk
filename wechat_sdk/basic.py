@@ -403,7 +403,7 @@ class WechatBasic(WechatBase):
             'mp4': 'video/mp4',
         }
         if isinstance(media_file, StringIO):
-            filename = 'temp.' + extension
+            filename = 'temp.' + extension.lower()
         else:
             filename = media_file.name
 
@@ -414,7 +414,7 @@ class WechatBasic(WechatBase):
                 'type': media_type,
             },
             files={
-                'media': (filename, media_file, ext[extension])
+                'media': (filename, media_file, ext[extension.lower()])
             }
         )
 
