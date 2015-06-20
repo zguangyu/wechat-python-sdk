@@ -876,22 +876,99 @@ class WechatBasicTestCase(unittest.TestCase):
             self.assertEqual(resp['next_openid'], 'NEXT_OPENID')
 
     def test_send_text_message(self):
-        pass
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.send_text_message('asdfasdfdf', 'asdadsfd')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.send_text_message('13412412341234242', '测试')
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
 
     def test_send_image_message(self):
-        pass
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.send_image_message('afasdfadsf', 'asfdadfsadfsdfas')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.send_image_message('asdfasdfdfas', '12342341234')
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
 
     def test_send_voice_message(self):
-        pass
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.send_voice_message('asdfasdf', 'safddsafasddfsaadsf')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.send_voice_message('safasf', '123412343423241')
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
 
     def test_send_video_message(self):
-        pass
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.send_video_message('asfasdfadsf', '123412342134')
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.send_video_message('safasf', '123412343423241')
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
 
     def test_send_music_message(self):
-        pass
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.send_music_message('231412341234', 'http://www.baidu.com', 'http://www.google.com', '12341234')
 
-    def test_article_message(self):
-        pass
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.send_music_message('231412341234', 'http://www.baidu.com', 'http://www.google.com', '12341234')
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
+
+    def test_send_article_message(self):
+        article_info = [
+            {
+                'title': '第一条新闻标题',
+                'description': '第一条新闻描述，这条新闻没有预览图',
+                'url': 'http://www.google.com.hk/',
+            }, {
+                'title': '第二条新闻标题, 这条新闻无描述',
+                'picurl': 'http://doraemonext.oss-cn-hangzhou.aliyuncs.com/test/wechat-test.jpg',
+                'url': 'http://www.github.com/',
+            }, {
+                'title': '第三条新闻标题',
+                'description': '第三条新闻描述',
+                'picurl': 'http://doraemonext.oss-cn-hangzhou.aliyuncs.com/test/wechat-test.jpg',
+                'url': 'http://www.v2ex.com/',
+            }
+        ]
+
+        # 测试无 appid 和 appsecret 初始化
+        wechat = WechatBasic()
+        with self.assertRaises(NeedParamError):
+            wechat.send_article_message('12341234234', article_info)
+
+        # 测试有 appid 和 appsecret 初始化
+        wechat = WechatBasic(appid=self.appid, appsecret=self.appsecret)
+        with HTTMock(wechat_api_mock):
+            resp = wechat.send_article_message('safasf', article_info)
+            self.assertEqual(resp['errcode'], 0)
+            self.assertEqual(resp['errmsg'], 'ok')
 
     def test_create_qrcode(self):
         pass
