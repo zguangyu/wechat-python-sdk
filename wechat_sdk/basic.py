@@ -5,7 +5,7 @@ import requests
 import time
 import json
 import cgi
-from StringIO import StringIO
+from io import StringIO
 
 from xml.dom import minidom
 
@@ -105,9 +105,9 @@ class WechatBasic(object):
         :raises ParseError: 解析微信服务器数据错误, 数据不合法
         """
         result = {}
-        if type(data) == unicode:
+        if type(data) == str:
             data = data.encode('utf-8')
-        elif type(data) == str:
+        elif type(data) == bytes:
             pass
         else:
             raise ParseError()
@@ -955,7 +955,7 @@ class WechatBasic(object):
             return data
 
         result = None
-        if isinstance(data, str):
+        if isinstance(data, bytes):
             result = data.decode('utf-8')
         else:
             result = data
